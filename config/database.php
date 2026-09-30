@@ -4,7 +4,7 @@ class Database {
     private string $host = "localhost";
     private string $user = "root";
     private string $pass = "";
-    private string $db_name = "todo_pbo_db";
+    private string $db_name = "list_tugas_pbo";
     
     // Menambahkan tipe data '?mysqli'
     public ?mysqli $conn = null;
