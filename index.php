@@ -1,35 +1,22 @@
-<!DOCTYPE html>
-<html lang="id">
+
+    <!DOCTYPE html>
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Utama - PBO</title>
-    <!-- Panggil CSS buatan tim Anda -->
-    <link rel="stylesheet" href="assets/css/style.css">
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="assets/css/globals.css">
+<link rel="stylesheet" href="assets/css/styleguide.css">
+<link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body class="dashboard-body">
-
-    <header class="hero-section">
-        <nav class="navbar">
-            <div class="logo">UMKT</div>
-            <ul class="nav-links">
-                <li><a href="#">Equipment</a></li>
-                <li><a href="#">About us</a></li>
-                <li><a href="#">Blog</a></li>
-            </ul>
-            <div class="account-link"><a href="#">Account</a></div>
-        </nav>
-
-        <div class="hero-content">
-            <span class="hero-subtitle">—— MANAJEMEN TUGAS PBO</span>
-            <h1 class="hero-title">Kelola Tugas Kuliah Dan<br>Pribadi Lebih Terstruktur!</h1>
-            <div class="hero-actions">
-                <span class="scroll-text">Mulai Kelola Tugas ➔</span>
-                <!-- Melompat ke Halaman Tugas -->
-                <a href="halaman_tugas.php" class="btn-outline">Lihat Tugas Saya</a>
-            </div>
-        </div>
-    </header>
-
+<body>
+<div class="hero-desktop" ><img class="BG-foto-buku" src="assets/img/Desktop 1921.png" />
+<img class="BG-overlay-gradasi" src="img/overlay-gradasi.png" />
+<div class="content-hero-text" ><div class="eyebrow" ><div class="eyebrow-text" >MANAJEMEN TUGAS PBO</div>
+<div class="eyebrow-line" ></div></div>
+<p class="headline" ><span class="text-wrapper" >Kelola Tugas Kuliah Dan Pribadi Lebih Terstruktur!</span></p>
+<div class="CTA-row" ><div class="CTA-text" >Mulai Tambah Tugas</div></div>
+<div class="CTA-button-buat"> <a href="halaman_tugas.php" class="button">Lihat Tugas Saya</a></div></div></div>
+<img class="social-sidebar" src="img/sidebar.png" />
+<div class="header-nav" ><img class="logo" src="img/logo.svg" /></div></div>
 </body>
 </html>
