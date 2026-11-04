@@ -11,7 +11,7 @@
     <?php $aktif = 'beranda'; include __DIR__ . '/includes/nav.php'; ?>
     <div class="hero-isi">
         <p class="eyebrow">Manajemen Tugas PBO</p>
-        <h1 class="headline">Kelola Tugas Kuliah Dan Pribadi Lebih Terstruktur!</h1>
+        <h1 class="headline">Kelola Tugas Kuliah Dan Pribadi Lebih Terstruktur</h1>
         <div class="aksi-hero">
             <a class="tombol tombol-emas" href="halaman_tugas.php">Lihat Tugas Saya</a>
             <a class="tombol tombol-garis" href="halaman_tugas.php#buat">Buat Tugas</a>
