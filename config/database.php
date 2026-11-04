@@ -1,22 +1,24 @@
 <?php
-class Database {
-    // Menambahkan tipe data 'string' untuk teks
-    private string $host = "localhost";
-    private string $user = "root";
-    private string $pass = "";
-    private string $db_name = "list_tugas_pbo";
-    
-    // Menambahkan tipe data '?mysqli'
-    public ?mysqli $conn = null;
+declare(strict_types=1);
 
-    // Menambahkan ': ?mysqli' sebagai tipe data kembalian (return type)
-    public function getConnection(): ?mysqli {
+class Database
+{
+    private const HOST = 'localhost';
+    private const USER = 'root';
+    private const PASS = '';
+    private const NAMA = 'list_tugas_pbo';
+
+    /** Membuka koneksi; gagal => RuntimeException dengan pesan aman (detail masuk error_log). */
+    public function getConnection(): mysqli
+    {
+        mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
         try {
-            $this->conn = new mysqli($this->host, $this->user, $this->pass, $this->db_name);
-        } catch(Exception $e) {
-            echo "Koneksi Error: " . $e->getMessage();
+            $conn = new mysqli(self::HOST, self::USER, self::PASS, self::NAMA);
+            $conn->set_charset('utf8mb4');
+            return $conn;
+        } catch (mysqli_sql_exception $e) {
+            error_log('Koneksi database gagal: ' . $e->getMessage());
+            throw new RuntimeException('Tidak dapat terhubung ke database.');
         }
-        return $this->conn;
     }
 }
-?>

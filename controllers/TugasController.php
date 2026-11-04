@@ -1,72 +1,56 @@
 <?php
-// Memanggil class Model agar bisa digunakan untuk membentuk objek
+declare(strict_types=1);
+
 require_once __DIR__ . '/../models/Tugas.php';
 
-class TugasController {
-    private mysqli $conn;
-    private string $table = "tugas";
+class TugasController
+{
+    public function __construct(private mysqli $db) {}
 
-    public function __construct(mysqli $db) {
-        $this->conn = $db;
+    /** READ: belum selesai dulu, lalu yang penting, lalu terbaru. */
+    public function semua(): array
+    {
+        $hasil = $this->db->query(
+            "SELECT id, judul, jenis, detail_tambahan, prioritas, status FROM tugas
+             ORDER BY status ASC, FIELD(prioritas, 'penting', 'normal'), id DESC"
+        );
+        return array_map(
+            fn(array $r) => Tugas::buat(
+                $r['jenis'], $r['judul'], $r['detail_tambahan'], (string)$r['prioritas'],
+                (bool)$r['status'], (int)$r['id']
+            ),
+            $hasil->fetch_all(MYSQLI_ASSOC)
+        );
     }
 
-    // CREATE: Menyimpan data ke database
-    public function tambahTugas(Tugas $tugas, string $jenis, string $detail_tambahan): bool {
-        // Mengambil data dari dalam objek menggunakan metode Getter (Enkapsulasi)
-        $judul = $tugas->getJudul();
-        $prioritas = $tugas->getPrioritas(); 
-        
-        $stmt = $this->conn->prepare("INSERT INTO " . $this->table . " (judul, jenis, detail_tambahan, prioritas) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("ssss", $judul, $jenis, $detail_tambahan, $prioritas);
-        
+    /** CREATE: mengembalikan id baru. */
+    public function tambah(Tugas $t): int
+    {
+        $judul = $t->getJudul(); $jenis = $t->getJenis(); $detail = $t->getDetail();
+        $prio  = $t->getPrioritas(); $status = $t->isSelesai() ? 1 : 0;
+        $stmt = $this->db->prepare(
+            'INSERT INTO tugas (judul, jenis, detail_tambahan, prioritas, status) VALUES (?, ?, ?, ?, ?)'
+        );
+        $stmt->bind_param('ssssi', $judul, $jenis, $detail, $prio, $status);
+        $stmt->execute();
+        return $this->db->insert_id;
+    }
+
+    /** UPDATE: tandai selesai atau kembalikan ke belum. */
+    public function ubahStatus(int $id, bool $selesai): bool
+    {
+        $status = $selesai ? 1 : 0;
+        $stmt = $this->db->prepare('UPDATE tugas SET status = ? WHERE id = ?');
+        $stmt->bind_param('ii', $status, $id);
         return $stmt->execute();
     }
 
-    // READ: Menarik data dari database dan mengubahnya menjadi array berisi objek
-    public function getSemuaTugas(): array {
-        // Query diurutkan berdasarkan prioritas 'penting' terlebih dahulu, baru ID terbaru
-        $query = "SELECT * FROM " . $this->table . " ORDER BY FIELD(prioritas, 'penting', 'normal'), id DESC";
-        $result = $this->conn->query($query);
-        
-        $daftarTugas = [];
-
-        while($row = $result->fetch_assoc()) {
-            // Polimorfisme: Mencetak objek yang berbeda berdasarkan isi kolom 'jenis'
-            if($row['jenis'] == 'kuliah') {
-                $daftarTugas[] = new TugasKuliah(
-                    $row['judul'], 
-                    $row['detail_tambahan'], 
-                    $row['prioritas'], 
-                    $row['status'], 
-                    $row['id']
-                );
-            } else {
-                $daftarTugas[] = new TugasPribadi(
-                    $row['judul'], 
-                    $row['detail_tambahan'], 
-                    $row['prioritas'], 
-                    $row['status'], 
-                    $row['id']
-                );
-            }
-        }
-        return $daftarTugas;
-    }
-
-    // UPDATE: Mengubah status tugas menjadi selesai (1)
-    public function selesaikanTugas(int $id): bool {
-        $stmt = $this->conn->prepare("UPDATE " . $this->table . " SET status = 1 WHERE id = ?");
-        $stmt->bind_param("i", $id);
-        
-        return $stmt->execute();
-    }
-
-    // DELETE: Menghapus tugas dari database
-    public function hapusTugas(int $id): bool {
-        $stmt = $this->conn->prepare("DELETE FROM " . $this->table . " WHERE id = ?");
-        $stmt->bind_param("i", $id);
-        
-        return $stmt->execute();
+    /** DELETE */
+    public function hapus(int $id): bool
+    {
+        $stmt = $this->db->prepare('DELETE FROM tugas WHERE id = ?');
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        return $stmt->affected_rows > 0;
     }
 }
-?>

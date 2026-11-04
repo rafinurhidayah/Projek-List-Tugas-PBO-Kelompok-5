@@ -1,74 +1,77 @@
 <?php
-// =================================================================
-// 1. ABSTRAKSI: Class induk sebagai kerangka dasar yang tidak bisa 
-// diinstansiasi langsung menggunakan 'new Tugas()'
-// =================================================================
-abstract class Tugas {
-    
-    // 2. ENKAPSULASI: Menyembunyikan data menggunakan modifier 'protected' 
-    // agar hanya bisa diakses oleh class ini dan class anaknya.
-    protected ?int $id;
-    protected string $judul;
-    protected string $prioritas;
-    protected int $status;
+declare(strict_types=1);
 
-    public function __construct(string $judul, string $prioritas = 'normal', int $status = 0, ?int $id = null) {
-        $this->judul = $judul;
-        $this->prioritas = $prioritas;
-        $this->status = $status;
-        $this->id = $id;
+/**
+ * ABSTRAKSI   : kerangka dasar tugas, tidak bisa di-instansiasi langsung (new Tugas()).
+ * ENKAPSULASI : data disimpan di properti protected, dibaca lewat getter.
+ * Model hanya mengurus DATA dan ATURAN; HTML dibuat di halaman (view).
+ */
+abstract class Tugas
+{
+    public const PRIORITAS    = ['penting', 'normal'];
+    public const MAKS_PANJANG = 255; // sesuai varchar(255) di database
+
+    public function __construct(
+        protected string $judul,
+        protected string $detailTambahan = '',
+        protected string $prioritas = 'normal',
+        protected bool $selesai = false,
+        protected ?int $id = null,
+    ) {}
+
+    // POLIMORFISME: tiap jenis tugas menjawab sendiri.
+    abstract public function getJenis(): string;       // nilai kolom `jenis`
+    abstract public function getJenisLabel(): string;  // teks untuk pengguna
+
+    /** Factory tunggal: satu-satunya tempat yang memilih subclass. Dipakai juga saat membaca dari DB. */
+    public static function buat(
+        string $jenis, string $judul, string $detail = '', string $prioritas = 'normal',
+        bool $selesai = false, ?int $id = null
+    ): self {
+        return match ($jenis) {
+            'kuliah'  => new TugasKuliah($judul, $detail, $prioritas, $selesai, $id),
+            'pribadi' => new TugasPribadi($judul, $detail, $prioritas, $selesai, $id),
+            default   => throw new InvalidArgumentException('Jenis tugas tidak valid.'),
+        };
     }
 
-    // Abstract method: Memaksa semua class anak untuk membuat fungsi ini
-    abstract public function getDetailTugas(): string;
-    
-    // Getter untuk mengambil data yang di-enkapsulasi
-    public function getJudul(): string { return $this->judul; }
-    public function getPrioritas(): string { return $this->prioritas; }
-    public function getStatus(): int { return $this->status; }
-    public function getId(): ?int { return $this->id; }
+    /** Validasi data dari form, lalu bentuk objeknya. */
+    public static function dariInput(array $in): self
+    {
+        $judul     = trim((string)($in['judul'] ?? ''));
+        $detail    = trim((string)($in['detail_tambahan'] ?? ''));
+        $prioritas = (string)($in['prioritas'] ?? 'normal');
 
-    // Helper method untuk mempercantik tampilan UI (Badge Prioritas)
-    public function getBadgePrioritas(): string {
-        if ($this->prioritas === 'penting') {
-            return "<span class='badge bg-danger'>Penting 🚨</span>";
+        if ($judul === '') {
+            throw new InvalidArgumentException('Judul tidak boleh kosong.');
         }
-        return "<span class='badge bg-secondary'>Normal</span>";
+        if (mb_strlen($judul) > self::MAKS_PANJANG || mb_strlen($detail) > self::MAKS_PANJANG) {
+            throw new InvalidArgumentException('Judul dan detail maksimal ' . self::MAKS_PANJANG . ' karakter.');
+        }
+        if (!in_array($prioritas, self::PRIORITAS, true)) {
+            throw new InvalidArgumentException('Prioritas tidak valid.');
+        }
+        return self::buat((string)($in['jenis'] ?? ''), $judul, $detail, $prioritas, ($in['status'] ?? '0') === '1');
     }
+
+    public function getId(): ?int          { return $this->id; }
+    public function getJudul(): string     { return $this->judul; }
+    public function getDetail(): string    { return $this->detailTambahan; }
+    public function getPrioritas(): string { return $this->prioritas; }
+    public function isPenting(): bool      { return $this->prioritas === 'penting'; }
+    public function isSelesai(): bool      { return $this->selesai; }
+    public function getKode(): string      { return $this->id === null ? 'TGS-baru' : sprintf('TGS-%03d', $this->id); }
 }
 
-// =================================================================
-// 3. INHERITANSI (Pewarisan): TugasKuliah mewarisi sifat dari Tugas
-// =================================================================
-class TugasKuliah extends Tugas {
-    private string $mataKuliah; // Properti khusus untuk tugas kuliah
-
-    public function __construct(string $judul, string $mataKuliah, string $prioritas = 'normal', int $status = 0, ?int $id = null) {
-        // Memanggil constructor dari class induk (Tugas)
-        parent::__construct($judul, $prioritas, $status, $id); 
-        $this->mataKuliah = $mataKuliah;
-    }
-
-    // 4. POLIMORFISME: Implementasi fungsi getDetailTugas dengan cara khusus
-    public function getDetailTugas(): string {
-        return "<span class='badge bg-primary'>Tugas Kuliah</span> " . $this->mataKuliah;
-    }
+// PEWARISAN: TugasKuliah dan TugasPribadi mewarisi semua sifat Tugas.
+class TugasKuliah extends Tugas
+{
+    public function getJenis(): string      { return 'kuliah'; }
+    public function getJenisLabel(): string { return 'Tugas Kuliah'; }
 }
 
-// =================================================================
-// 3. INHERITANSI: TugasPribadi mewarisi sifat dari Tugas
-// =================================================================
-class TugasPribadi extends Tugas {
-    private string $kategori; // Properti khusus untuk tugas pribadi
-
-    public function __construct(string $judul, string $kategori, string $prioritas = 'normal', int $status = 0, ?int $id = null) {
-        parent::__construct($judul, $prioritas, $status, $id);
-        $this->kategori = $kategori;
-    }
-
-    // 4. POLIMORFISME: Implementasi yang berbeda dari TugasKuliah
-    public function getDetailTugas(): string {
-        return "<span class='badge bg-success'>Tugas Pribadi</span> " . $this->kategori;
-    }
+class TugasPribadi extends Tugas
+{
+    public function getJenis(): string      { return 'pribadi'; }
+    public function getJenisLabel(): string { return 'Tugas Pribadi'; }
 }
-?>

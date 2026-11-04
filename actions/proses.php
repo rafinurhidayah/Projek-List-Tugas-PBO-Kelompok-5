@@ -1,57 +1,62 @@
 <?php
-// Memanggil file koneksi database dan logika controller
-require_once '../config/Database.php';
-require_once '../controllers/TugasController.php';
+declare(strict_types=1);
 
-// Inisialisasi Database dan Controller
-$database = new Database();
-$db = $database->getConnection();
-$controller = new TugasController($db);
+require_once __DIR__ . '/../includes/helpers.php';
+require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../controllers/TugasController.php';
 
-// ==========================================
-// 1. PROSES TAMBAH TUGAS (CREATE)
-// ==========================================
-if (isset($_POST['tambah'])) {
-    // Menangkap data dari form input HTML
-    $judul = $_POST['judul'];
-    $jenis = $_POST['jenis'];
-    $prioritas = $_POST['prioritas'];
-    $detail_tambahan = $_POST['detail_tambahan'];
+const HALAMAN = '../halaman_tugas.php';
+$ajax = str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json');
 
-    // Polimorfisme: Membentuk objek yang berbeda berdasarkan pilihan 'jenis' di form
-    if ($jenis == 'kuliah') {
-        $tugasBaru = new TugasKuliah($judul, $detail_tambahan, $prioritas);
-    } else {
-        $tugasBaru = new TugasPribadi($judul, $detail_tambahan, $prioritas);
+/** JSON untuk fetch(); tanpa JavaScript => flash message + redirect biasa. */
+function balas(bool $ok, string $pesan, bool $ajax, int $kode = 200): never
+{
+    if ($ajax) {
+        http_response_code($kode);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['ok' => $ok, 'pesan' => $pesan], JSON_UNESCAPED_UNICODE);
+        exit;
     }
-
-    // Mengirim objek tersebut ke Controller untuk disimpan ke database
-    $controller->tambahTugas($tugasBaru, $jenis, $detail_tambahan);
-    
-    // Redirect kembali ke halaman utama
-    header("Location: ../index.php");
-    exit();
+    flash($ok ? 'sukses' : 'error', $pesan);
+    header('Location: ' . HALAMAN);
+    exit;
 }
 
-// ==========================================
-// 2. PROSES SELESAIKAN TUGAS (UPDATE)
-// ==========================================
-if (isset($_GET['selesai'])) {
-    $id_tugas = (int)$_GET['selesai'];
-    
-    $controller->selesaikanTugas($id_tugas);
-    header("Location: ../index.php");
-    exit();
+// Semua aksi hanya lewat POST + token CSRF (tidak ada lagi ?hapus=3 di URL).
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: ' . HALAMAN);
+    exit;
+}
+if (!csrf_valid($_POST['csrf'] ?? null)) {
+    balas(false, 'Sesi kedaluwarsa. Muat ulang halaman lalu coba lagi.', $ajax, 403);
 }
 
-// ==========================================
-// 3. PROSES HAPUS TUGAS (DELETE)
-// ==========================================
-if (isset($_GET['hapus'])) {
-    $id_tugas = (int)$_GET['hapus'];
-    
-    $controller->hapusTugas($id_tugas);
-    header("Location: ../index.php");
-    exit();
+try {
+    $kontrol = new TugasController((new Database())->getConnection());
+    $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+
+    switch ($_POST['aksi'] ?? '') {
+        case 'tambah':
+            $kontrol->tambah(Tugas::dariInput($_POST));
+            balas(true, 'Tugas berhasil disimpan.', $ajax);
+
+        case 'status':
+            if ($id === false) { throw new InvalidArgumentException('ID tugas tidak valid.'); }
+            $kontrol->ubahStatus($id, ($_POST['status'] ?? '0') === '1');
+            balas(true, 'Status diperbarui.', $ajax);
+
+        case 'hapus':
+            if ($id === false) { throw new InvalidArgumentException('ID tugas tidak valid.'); }
+            $kontrol->hapus($id)
+                ? balas(true, 'Tugas dihapus.', $ajax)
+                : balas(false, 'Tugas tidak ditemukan.', $ajax, 404);
+
+        default:
+            balas(false, 'Aksi tidak dikenal.', $ajax, 400);
+    }
+} catch (InvalidArgumentException $e) {
+    balas(false, $e->getMessage(), $ajax, 422);
+} catch (Throwable $e) {
+    error_log($e->getMessage());
+    balas(false, 'Terjadi kesalahan pada server.', $ajax, 500);
 }
-?>
