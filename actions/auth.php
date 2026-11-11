@@ -61,3 +61,9 @@ try {
     flash('error', 'Terjadi kesalahan pada server. Pastikan MySQL menyala dan database sudah diimpor.');
     alihkan($balik);
 }
+
+catch (Throwable $e) {
+    // Tampilkan error asli ke layar sementara waktu untuk mencari tahu masalahnya
+    flash('error', 'Error Sistem: ' . $e->getMessage()); 
+    alihkan($balik);
+}
