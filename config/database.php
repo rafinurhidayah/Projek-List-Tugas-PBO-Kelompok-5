@@ -1,24 +1,16 @@
 <?php
-declare(strict_types=1);
+// Mengambil nilai dari Env Vars EthioDeploy
+$host = getenv('DB_HOST');
+$user = getenv('DB_USERNAME');
+$pass = getenv('DB_PASSWORD');
+$db   = getenv('DB_DATABASE');
+$port = getenv('DB_PORT');
 
-class Database
-{
-    private const HOST = 'localhost';
-    private const USER = 'root';
-    private const PASS = '';
-    private const NAMA = 'list_tugas_pbo';
+// Membuat koneksi menggunakan OOP mysqli
+$koneksi = new mysqli($host, $user, $pass, $db, $port);
 
-    /** Membuka koneksi; gagal => RuntimeException dengan pesan aman (detail masuk error_log). */
-    public function getConnection(): mysqli
-    {
-        mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-        try {
-            $conn = new mysqli(self::HOST, self::USER, self::PASS, self::NAMA);
-            $conn->set_charset('utf8mb4');
-            return $conn;
-        } catch (mysqli_sql_exception $e) {
-            error_log('Koneksi database gagal: ' . $e->getMessage());
-            throw new RuntimeException('Tidak dapat terhubung ke database.');
-        }
-    }
+// Mengecek koneksi
+if ($koneksi->connect_error) {
+    die("Koneksi database gagal: " . $koneksi->connect_error);
 }
+?>
