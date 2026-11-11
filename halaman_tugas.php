@@ -2,13 +2,15 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/includes/helpers.php';
-require_once __DIR__ . '/config/Database.php';
+require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/controllers/TugasController.php';
+
+wajib_login();
 
 $daftar = [];
 $galat  = null;
 try {
-    $daftar = (new TugasController((new Database())->getConnection()))->semua();
+    $daftar = (new TugasController((new Database())->getConnection(), (int)user_id()))->semua();
 } catch (Throwable $e) {
     error_log($e->getMessage());
     $galat = 'Tugas belum bisa dimuat. Pastikan MySQL di XAMPP menyala dan database "list_tugas_pbo" sudah diimpor.';

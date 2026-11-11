@@ -137,6 +137,7 @@
     kartu.classList.add('is-sibuk');
     try {
       const res = await fetch(f.action, { method: 'POST', body: new FormData(f), headers: { Accept: 'application/json' } });
+      if (res.status === 401) { location.href = 'login.php'; return; } // sesi habis
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.pesan || 'Permintaan gagal.');
       if (aksi === 'status') {

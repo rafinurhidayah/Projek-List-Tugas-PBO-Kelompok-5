@@ -190,3 +190,25 @@ textarea.input { resize: vertical; min-height: 92px; }
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }
+
+/* ---------- Halaman masuk / daftar ---------- */
+.auth { display: grid; place-items: start center; padding: clamp(16px, 5vw, 64px) var(--sisi) 96px; }
+.auth-kartu { width: min(460px, 100%); border: 1px solid var(--garis); border-radius: 10px; background: var(--bg-2); }
+.auth-kartu h1 { margin: 0; font: 600 clamp(1.9rem, 5vw, 2.6rem)/1.15 var(--font-judul); }
+.auth-kartu .eyebrow { margin-bottom: 12px; }
+.auth-kartu .tombol { width: 100%; }
+.auth-pesan { margin: 0; padding: 12px 14px; border: 1px solid var(--garis); border-radius: 6px; font-size: .9rem; }
+.auth-pesan.galat { color: var(--merah); border-color: rgba(255,154,154,.45); background: rgba(255,154,154,.08); }
+.auth-pesan.sukses { color: var(--hijau); border-color: rgba(140,217,166,.45); background: rgba(140,217,166,.08); }
+.auth-alt { margin: 0; color: var(--redup); font-size: .9rem; text-align: center; }
+.auth-alt a { color: var(--emas); }
+
+/* Pengguna aktif + tombol keluar di navigasi */
+.nav-keluar { display: flex; align-items: center; gap: 14px; margin: 0; }
+.nav-user { color: var(--redup); font-size: .9rem; }
+.nav-keluar button { padding: 9px 18px; border: 1px solid rgba(255,255,255,.4); border-radius: 4px; background: none;
+  color: #fff; font: inherit; cursor: pointer; transition: border-color .2s; }
+.nav-keluar button:hover { border-color: #fff; }
+@media (max-width: 720px) {
+  .nav-keluar { flex-direction: column; align-items: stretch; padding: 14px 12px 4px; text-align: center; }
+}
